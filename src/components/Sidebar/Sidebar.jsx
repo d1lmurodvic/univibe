@@ -18,7 +18,6 @@ const Sidebar = () => {
   const role = useSelector((state) => state?.auth?.role);
   const userInfo = useSelector((state) => state?.auth?.userInfo);
 
-  // student uchun array, club uchun obyekt
   const user =
     role === "student"
       ? userInfo && userInfo.length > 0
@@ -53,7 +52,6 @@ const Sidebar = () => {
     document.getElementById("logout_modal").close();
   };
 
-  // Role bo‘yicha linklar
   const links =
     role === "student"
       ? [
