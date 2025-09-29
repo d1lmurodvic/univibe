@@ -13,7 +13,7 @@ export default function Clubs() {
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
-
+  console.log("asdf", modalData)
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -52,7 +52,7 @@ export default function Clubs() {
       console.error("Single club fetch error:", err);
     }
   };
-
+  console.log("SS", modalData);
   // Animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 40 },
@@ -102,14 +102,14 @@ export default function Clubs() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            className="fixed inset-0 z-50 flex items-center p-4 justify-center bg-black/50"
           >
             <motion.div
               initial={{ scale: 0.8, y: 50, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.8, y: 50, opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="bg-base-100 max-w-lg w-full rounded-xl shadow-xl p-6 overflow-y-auto max-h-[90vh]"
+              className="bg-base-100 xl:max-w-xl lg:max-w-lg sm:max-w-sm md:max-w-lg max-w-sm w-full rounded-xl shadow-xl p-6 overflow-y-auto max-h-[90vh]"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">{modalData.name}</h2>
@@ -126,7 +126,7 @@ export default function Clubs() {
                   <motion.img
                     src={modalData.logo}
                     alt="club logo"
-                    className="w-20 h-20 object-cover rounded-full border"
+                    className="w-16 h-16 object-cover rounded-full border"
                     initial={{ rotate: -10, opacity: 0 }}
                     animate={{ rotate: 0, opacity: 1 }}
                     transition={{ duration: 0.5 }}
@@ -181,22 +181,21 @@ export default function Clubs() {
 
               {/* Followers section */}
               <div className="mt-4">
-                <h3 className="text-xl font-semibold">
-                  Followers ({modalData.followers?.length || 0})
+                <h3 className="text-lg font-semibold">
+                  Followers ({modalData.followers?.count || 0})
                 </h3>
-                {modalData.followers?.length ? (
+
+                {modalData.followers?.results?.length > 0 ? (
                   <motion.ul
                     initial="hidden"
                     animate="visible"
                     variants={{
                       hidden: {},
-                      visible: {
-                        transition: { staggerChildren: 0.1 },
-                      },
+                      visible: { transition: { staggerChildren: 0.1 } },
                     }}
-                    className="space-y-2"
+                    className="space-y-2 pt-2"
                   >
-                    {modalData.followers.map((follower) => (
+                    {modalData.followers.results.map((follower) => (
                       <motion.li
                         key={follower.id}
                         initial={{ opacity: 0, x: -20 }}
@@ -224,6 +223,7 @@ export default function Clubs() {
                   <p>No followers yet.</p>
                 )}
               </div>
+
             </motion.div>
           </motion.div>
         )}
