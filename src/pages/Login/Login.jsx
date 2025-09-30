@@ -26,6 +26,8 @@ const Login = () => {
           login: `${baseUrl}/api/v1/clubs/auth/login/`,
           info: `${baseUrl}/api/v1/clubs/profile/` 
         };
+
+
       case 'admin':
         return { login: `${baseUrl}/api/v1/staff/auth/login/`, info: null };
       case 'student':
@@ -52,7 +54,6 @@ const Login = () => {
       console.log("login response:", loginResponse.data);
       const refreshToken = loginResponse.data.refresh_token;
       const accessToken = loginResponse.data.access_token;
-      console.log('Login response:', loginResponse.data);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('role', role);
@@ -81,6 +82,10 @@ const Login = () => {
         window.location.href = 'https://sap-admin-99uo.vercel.app';
       } else {
         navigate('/');
+      }
+
+      if ( role === 'club') {
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
