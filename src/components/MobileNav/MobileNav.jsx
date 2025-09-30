@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 import { FaHome, FaUser, FaBook } from 'react-icons/fa';
 import { FaBasketShopping } from 'react-icons/fa6';
 import { BsQrCodeScan } from "react-icons/bs";
-import { MdLeaderboard } from 'react-icons/md';
+import { MdGroups, MdLeaderboard } from 'react-icons/md';
 import { useSelector } from 'react-redux';
 
 const MobileNav = () => {
@@ -14,8 +14,8 @@ const MobileNav = () => {
 
 
   const links =
-  role === "student"
-    ? [
+    role === "student"
+      ? [
         { name: "Home", path: "/", icon: <FaHome className="mr-2" /> },
         {
           name: "Clubs",
@@ -27,6 +27,8 @@ const MobileNav = () => {
           path: "/shop",
           icon: <FaBasketShopping className="mr-2" />,
         },
+        { name: 'Scan', path: '/qr-scanner', icon: <BsQrCodeScan className="text-xl" /> },
+
         {
           name: "Rating",
           path: "/rating",
@@ -38,20 +40,20 @@ const MobileNav = () => {
           icon: <FaUser className="mr-2" />,
         },
       ]
-    : role === "club"
-    ? [
-        {
-          name: "Dashboard",
-          path: "/dashboard",
-          icon: <FaHome className="mr-2" />,
-        },
-        {
-          name: "Profile",
-          path: "/club-profile",
-          icon: <FaUser className="mr-2" />,
-        },
-      ]
-    : [];
+      : role === "club"
+        ? [
+          {
+            name: "Dashboard",
+            path: "/dashboard",
+            icon: <FaHome className="mr-2" />,
+          },
+          {
+            name: "Profile",
+            path: "/club-profile",
+            icon: <FaUser className="mr-2" />,
+          },
+        ]
+        : [];
 
   return (
     <div className="dock fixed bottom-0 left-0 right-0 bg-base-100 shadow-lg p-2 flex items-center justify-around md:hidden">

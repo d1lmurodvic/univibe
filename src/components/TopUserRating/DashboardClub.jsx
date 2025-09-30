@@ -20,6 +20,9 @@ const DashboardClub = () => {
     quantity_token: 0,
   });
 
+  console.log("activeEvents", activeEvents);
+  console.log("pendingEvents", pendingEvents);
+
   const token = localStorage.getItem("accessToken");
 
   const getImageUrl = (imgPath) => {
@@ -35,7 +38,7 @@ const DashboardClub = () => {
       });
       setActiveEvents(res.data?.active || []);
       setPendingEvents(res.data?.pending || []);
-    } catch {
+    } catch (err) {
       toast.error("Failed to load events");
       setActiveEvents([]);
       setPendingEvents([]);
@@ -65,26 +68,24 @@ const DashboardClub = () => {
     try {
       const fd = new FormData();
       fd.append("title", formData.title);
-
       if (formData.img) fd.append("img", formData.img);
       if (formData.url) fd.append("url", formData.url);
 
       if (formData.event_datetime) {
         const dt = new Date(formData.event_datetime);
-        const localDateTime = dt.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
-        fd.append("event_datetime", localDateTime);
+        fd.append("event_datetime", dt.toISOString());
       }
 
       if (formData.registration_deadline) {
         const deadline = new Date(formData.registration_deadline)
           .toISOString()
-          .split("T")[0]; // YYYY-MM-DD
+          .split("T")[0];
         fd.append("registration_deadline", deadline);
       }
 
       if (formData.has_promo) {
         fd.append("has_promo", "true");
-        fd.append("quantity_token", String(formData.quantity_token || 1));
+        fd.append("quantity_token", String(formData.quantity_token));
       } else {
         fd.append("has_promo", "false");
       }
@@ -107,42 +108,33 @@ const DashboardClub = () => {
       if (createRes.data?.promo) {
         toast.info(`Promo code: ${createRes.data.promo}`);
       }
-    } catch (err) {
-      console.error("Create error:", err.response?.data || err.message);
-      toast.error(
-        err.response?.data?.detail ||
-          "Failed to create event. Please try again."
-      );
+    } catch {
+      toast.error("Failed to create event. Please try again.");
     }
   };
 
   const handleQrCode = async (eventId) => {
     try {
       const res = await axios.get(
-        `${BASE_URL}/api/v1/events/${eventId}/promo-qr/`,
+        `${BASE_URL}/api/v1/events/events/${eventId}/promo-qr/`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (res.data?.qr_code) {
         setQrModal({ open: true, qrUrl: `${BASE_URL}${res.data.qr_code}` });
-  
-        setTimeout(() => {
-          document.getElementById("qr_modal").showModal();
-        }, 50);
       } else {
         toast.error("No QR code found for this event");
       }
     } catch (err) {
-      if (err.response?.status === 400 || err.response?.status === 404) {
+      if (err.response?.status === 400) {
         toast.error("This event has no promo QR");
       } else {
         toast.error("Failed to load QR code");
       }
     }
   };
-  
 
   const EventSection = ({ title, events, borderColor }) => (
     <div className="mt-6">
@@ -182,7 +174,6 @@ const DashboardClub = () => {
                     </a>
                   )}
                 </div>
-
                 <div className="flex flex-col gap-2">
                   <button
                     className="btn btn-success btn-sm"
@@ -208,9 +199,7 @@ const DashboardClub = () => {
   return (
     <div className="container mx-auto max-w-[95%] flex flex-col gap-6 py-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <p className="text-2xl font-bold text-info/80 flex sm:justify-center">
-          Dashboard
-        </p>
+        <p className="text-2xl font-bold text-info/80  flex sm:justify-center">Dashboard</p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <button className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto">
             <IoMdTime /> Event history
@@ -243,57 +232,48 @@ const DashboardClub = () => {
         </>
       )}
 
-      {/* ✅ QR Modal */}
-      <dialog id="qr_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Event QR Code</h3>
-          {qrModal.qrUrl ? (
-            <img
-              src={qrModal.qrUrl}
-              alt="QR Code"
-              className="mx-auto w-56 h-56 object-contain"
-            />
-          ) : (
-            <p>No QR code found</p>
-          )}
-          <div className="modal-action">
-            <button
-              className="btn"
-              onClick={() => {
-                setQrModal({ open: false, qrUrl: null });
-                document.getElementById("qr_modal").close();
-              }}
-            >
-              Close
-            </button>
+      {qrModal.open && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <form method="dialog">
+              <button
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                onClick={() => setQrModal({ open: false, qrUrl: null })}
+              >
+                ✕
+              </button>
+            </form>
+            <h3 className="font-bold text-lg mb-4">Event QR Code</h3>
+            {qrModal.qrUrl ? (
+              <img
+                src={qrModal.qrUrl}
+                alt="QR Code"
+                className="mx-auto w-56 h-56 object-contain"
+              />
+            ) : (
+              <p>No QR code found</p>
+            )}
           </div>
-        </div>
-      </dialog>
+        </dialog>
+      )}
 
-      {/* Add Event Modal */}
+      {/* Responsive Create Event Modal */}
       <dialog id="event_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box w-full max-w-2xl">
           <h3 className="font-bold text-lg mb-4">Create New Event</h3>
-          <form
-            onSubmit={handleCreate}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
+          <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
               placeholder="Title"
               className="input input-bordered w-full"
               required
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
             <input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                setFormData({ ...formData, img: e.target.files[0] })
-              }
+              onChange={(e) => setFormData({ ...formData, img: e.target.files[0] })}
               className="file-input file-input-bordered w-full"
             />
             <input
@@ -301,9 +281,7 @@ const DashboardClub = () => {
               placeholder="Event URL"
               className="input input-bordered w-full"
               value={formData.url}
-              onChange={(e) =>
-                setFormData({ ...formData, url: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
             />
             <input
               type="datetime-local"
@@ -320,10 +298,7 @@ const DashboardClub = () => {
               required
               value={formData.registration_deadline}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  registration_deadline: e.target.value,
-                })
+                setFormData({ ...formData, registration_deadline: e.target.value })
               }
             />
             <div className="flex items-center gap-2 sm:col-span-2">
@@ -348,7 +323,7 @@ const DashboardClub = () => {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    quantity_token: parseInt(e.target.value) || 1,
+                    quantity_token: parseInt(e.target.value) || 0,
                   })
                 }
               />
@@ -360,9 +335,7 @@ const DashboardClub = () => {
               <button
                 type="button"
                 className="btn"
-                onClick={() =>
-                  document.getElementById("event_modal").close()
-                }
+                onClick={() => document.getElementById("event_modal").close()}
               >
                 Close
               </button>
