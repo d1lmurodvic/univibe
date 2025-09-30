@@ -15,7 +15,7 @@ import Rating from "./pages/Rating/Rating.jsx";
 import PrivateRoute from "./hooks/PrivateRoute.jsx";
 import QrCode from "./pages/QrCode/QrCode.jsx";
 import StudentsRaiting from "./pages/StudentsRaiting/StudentsRaiting.jsx";
-import DashboardClub from "./pages/DashboardClub/DashboardCllub.jsx";
+import DashboardClub from "./pages/DashboardClub/DashboardClub.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ClubProfile from "./pages/ClubProfile/ClubProfile.jsx";

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   User, GraduationCap, Hash, Coins, BookOpen,
-  Award, PencilLine, X, Check,
+  PencilLine, X, Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axiosInstance from "../../axiosInstance/axiosInstance";
@@ -71,7 +71,7 @@ const Profile = () => {
     if (!selectedFile) return openFilePicker();
 
     const formData = new FormData();
-    formData.append("image", selectedFile);
+    formData.append("image", selectedFile); // ⚠️ confirm backend key
 
     try {
       setUploading(true);
@@ -111,7 +111,9 @@ const Profile = () => {
   const avatarSrc =
     previewImage ||
     (profile?.image
-      ? `https://api.univibe.uz${profile.image}?v=${profile.image_updated_at}`
+      ? (profile.image.startsWith("http")
+          ? `${profile.image}?v=${Date.now()}`
+          : `https://api.univibe.uz${profile.image}?v=${Date.now()}`)
       : "");
 
   return (
@@ -127,14 +129,14 @@ const Profile = () => {
         transition={{ duration: 0.6 }}
         className="max-w-3xl mx-auto bg-base-200 rounded-2xl shadow-md p-6 space-y-6"
       >
-        {/* Profile Header */}
         <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-6">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="relative group"
-          >
+          <motion.div whileHover={{ scale: 1.05 }} className="relative group">
             <div className="w-28 h-28 rounded-full overflow-hidden border border-base-300 shadow-sm">
-              <img src={avatarSrc} alt="Profile" className="w-full h-full object-cover" />
+              {avatarSrc ? (
+                <img src={avatarSrc} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-20 h-20 text-base-300 mx-auto mt-4" />
+              )}
             </div>
 
             <button
@@ -171,7 +173,6 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Edit action bar */}
         <AnimatePresence>
           {isEditing && (
             <motion.div
@@ -211,14 +212,10 @@ const Profile = () => {
           )}
         </AnimatePresence>
 
-        {/* Stats */}
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.15 } },
-          }}
+          variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.15 } } }}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
           {[
@@ -263,16 +260,6 @@ const Profile = () => {
               </div>
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* GPA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="bg-base-100 border border-base-300 p-4 rounded-xl space-y-3"
-        >
-        
         </motion.div>
       </motion.div>
     </motion.div>

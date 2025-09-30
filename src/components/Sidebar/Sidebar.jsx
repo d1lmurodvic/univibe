@@ -32,6 +32,9 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  console.log("user:", user); 
+  
+
   const gradeName =
     user && user?.grade && user?.grade?.grade_name
       ? user?.grade?.grade_name
@@ -96,14 +99,12 @@ const Sidebar = () => {
     <aside className="h-screen bg-base-200 p-4 shadow-lg border-r border-base-300">
       <nav className="flex flex-col h-full justify-between">
         <div>
-          {/* Avatar */}
           <div
             onClick={() =>
               role === "club" ? navigate("/club-profile") : navigate("/profile")
             }
             className="flex flex-col items-center mb-4 cursor-pointer"
           >
-            {/* Student bo‘lsa */}
             {role === "student" && (
               <>
                 {user?.image && !imgError ? (
@@ -136,14 +137,13 @@ const Sidebar = () => {
               </>
             )}
 
-            {/* Club bo‘lsa */}
             {role === "club" && (
               <>
                 {user?.logo && !imgError ? (
                   <div className="avatar">
                     <div className="w-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 transition-all">
                       <img
-                        src={`https://api.univibe.uz${user.logo}?v=${
+                        src={`https://api.univibe.uz${user?.logo}?v=${
                           user.logo_updated_at || Date.now()
                         }`}
                         alt={user?.name || "Club"}

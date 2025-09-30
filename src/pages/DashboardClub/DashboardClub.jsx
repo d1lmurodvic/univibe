@@ -3,12 +3,13 @@ import { IoMdTime } from "react-icons/io";
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const BASE_URL = "https://api.univibe.uz";
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 const DashboardClub = () => {
   const [activeEvents, setActiveEvents] = useState([]);
   const [pendingEvents, setPendingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [qrModal, setQrModal] = useState({ open: false, qrUrl: null });
   const [formData, setFormData] = useState({
     title: "",
     img: null,
@@ -27,19 +28,14 @@ const DashboardClub = () => {
     return `${BASE_URL}${imgPath}`;
   };
 
-  // === Fetch Events ===
   const fetchEvents = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/v1/clubs/events/list/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      console.log("RAW EVENTS RESPONSE:", JSON.stringify(res.data, null, 2));
-
       setActiveEvents(res.data?.active || []);
       setPendingEvents(res.data?.pending || []);
     } catch (err) {
-      console.error("Fetch events error:", err.response?.data || err.message);
       toast.error("Failed to load events");
       setActiveEvents([]);
       setPendingEvents([]);
@@ -52,7 +48,6 @@ const DashboardClub = () => {
     if (token) fetchEvents();
   }, [token]);
 
-  // === Delete Event ===
   const handleDelete = async (eventId) => {
     try {
       await axios.delete(`${BASE_URL}/api/v1/clubs/events/${eventId}/delete/`, {
@@ -60,13 +55,11 @@ const DashboardClub = () => {
       });
       toast.success("Event deleted successfully!");
       await fetchEvents();
-    } catch (err) {
-      console.error("Delete event error:", err.response?.data || err.message);
+    } catch {
       toast.error("Failed to delete event");
     }
   };
 
-  // === Create Event ===
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -105,22 +98,46 @@ const DashboardClub = () => {
         }
       );
 
-      console.log("Created event:", createRes.data);
-
       toast.success("Event created successfully!");
       await fetchEvents();
       document.getElementById("event_modal").close();
-    } catch (err) {
-      console.error("Create event error:", err.response?.data || err.message);
+
+      if (createRes.data?.promo) {
+        toast.info(`Promo code: ${createRes.data.promo}`);
+      }
+    } catch {
       toast.error("Failed to create event. Please try again.");
+    }
+  };
+
+  const handleQrCode = async (eventId) => {
+    try {
+      const res = await axios.get(
+        `${BASE_URL}/api/v1/events/events/${eventId}/promo-qr/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (res.data?.qr_code) {
+        setQrModal({ open: true, qrUrl: `${BASE_URL}${res.data.qr_code}` });
+      } else {
+        toast.error("No QR code found for this event");
+      }
+    } catch (err) {
+      if (err.response?.status === 400) {
+        toast.error("This event has no promo QR");
+      } else {
+        toast.error("Failed to load QR code");
+      }
     }
   };
 
   const EventSection = ({ title, events, borderColor }) => (
     <div className="mt-6">
-      <h2 className="text-xl font-bold mb-4">{title}</h2>
+      <p className="text-xl font-bold mb-4">{title}</p>
       {events.length === 0 ? (
-        <p className="text-base-300">No {title.toLowerCase()}.</p>
+        <p className="text-warning">No {title.toLowerCase()}.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {events.map((ev) => (
@@ -135,7 +152,7 @@ const DashboardClub = () => {
                   className="w-full h-48 object-cover hover:scale-105 transition-transform"
                 />
               </figure>
-              <div className="p-4 border-t flex items-center justify-between">
+              <div className="p-4 border-t flex items-center border-b-2 border-info rounded-b-2xl justify-between">
                 <div>
                   <h3 className="text-lg font-semibold">{ev.title}</h3>
                   <p className="text-sm text-base-content mt-1">
@@ -154,12 +171,20 @@ const DashboardClub = () => {
                     </a>
                   )}
                 </div>
-                <button
-                  className="btn btn-error btn-sm ml-2"
-                  onClick={() => handleDelete(ev.id)}
-                >
-                  Delete
-                </button>
+                <div className="flex flex-col gap-2">
+                  <button
+                    className="btn btn-success btn-sm"
+                    onClick={() => handleQrCode(ev.id)}
+                  >
+                    QrCode
+                  </button>
+                  <button
+                    className="btn btn-error btn-sm"
+                    onClick={() => handleDelete(ev.id)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -170,20 +195,20 @@ const DashboardClub = () => {
 
   return (
     <div className="container mx-auto max-w-[95%] flex flex-col gap-6 py-6">
-      <div className="flex items-center justify-between">
-        <p className="text-2xl font-bold text-info/80">Dashboard</p>
-        <div className="flex gap-3">
-          <button className="btn btn-primary">
-            <IoMdTime /> Event history
-          </button>
-          <button
-            className="btn btn-success"
-            onClick={() => document.getElementById("event_modal").showModal()}
-          >
-            + Add events
-          </button>
-        </div>
-      </div>
+     <div className="flex items-center justify-between flex-wrap gap-3">
+  <p className="text-2xl font-bold text-info/80  flex sm:justify-center">Dashboard</p>
+  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+    <button className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto">
+      <IoMdTime /> Event history
+    </button>
+    <button
+      className="btn btn-success btn-sm sm:btn-md w-full sm:w-auto"
+      onClick={() => document.getElementById("event_modal").showModal()}
+    >
+      + Add events
+    </button>
+  </div>
+</div>
 
       {loading ? (
         <div className="flex items-center justify-center h-40">
@@ -199,32 +224,53 @@ const DashboardClub = () => {
           <EventSection
             title="Pending Events"
             events={pendingEvents}
-            borderColor="border-warning"
+            borderColor="border-info"
           />
         </>
       )}
 
-      {/* === Modal === */}
+      {qrModal.open && (
+        <dialog open className="modal">
+          <div className="modal-box">
+            <form method="dialog">
+              <button
+                className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+                onClick={() => setQrModal({ open: false, qrUrl: null })}
+              >
+                ✕
+              </button>
+            </form>
+            <h3 className="font-bold text-lg mb-4">Event QR Code</h3>
+            {qrModal.qrUrl ? (
+              <img
+                src={qrModal.qrUrl}
+                alt="QR Code"
+                className="mx-auto w-56 h-56 object-contain"
+              />
+            ) : (
+              <p>No QR code found</p>
+            )}
+          </div>
+        </dialog>
+      )}
+
+      {/* Responsive Create Event Modal */}
       <dialog id="event_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
+        <div className="modal-box w-full max-w-2xl">
           <h3 className="font-bold text-lg mb-4">Create New Event</h3>
-          <form onSubmit={handleCreate} className="grid gap-4">
+          <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <input
               type="text"
               placeholder="Title"
               className="input input-bordered w-full"
               required
               value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             />
             <input
               type="file"
               accept="image/*"
-              onChange={(e) =>
-                setFormData({ ...formData, img: e.target.files[0] })
-              }
+              onChange={(e) => setFormData({ ...formData, img: e.target.files[0] })}
               className="file-input file-input-bordered w-full"
             />
             <input
@@ -232,9 +278,7 @@ const DashboardClub = () => {
               placeholder="Event URL"
               className="input input-bordered w-full"
               value={formData.url}
-              onChange={(e) =>
-                setFormData({ ...formData, url: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
             />
             <input
               type="datetime-local"
@@ -251,13 +295,10 @@ const DashboardClub = () => {
               required
               value={formData.registration_deadline}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  registration_deadline: e.target.value,
-                })
+                setFormData({ ...formData, registration_deadline: e.target.value })
               }
             />
-            <label className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:col-span-2">
               <input
                 type="checkbox"
                 className="checkbox"
@@ -266,16 +307,15 @@ const DashboardClub = () => {
                   setFormData({ ...formData, has_promo: e.target.checked })
                 }
               />
-              Has promo?
-            </label>
-
+              <span>Has promo?</span>
+            </div>
             {formData.has_promo && (
               <input
                 type="number"
-                min="0"
-                max="10"
+                min="1"
+                max="100"
                 placeholder="Promo token quantity"
-                className="input input-bordered w-full"
+                className="input input-bordered w-full sm:col-span-2"
                 value={formData.quantity_token}
                 onChange={(e) =>
                   setFormData({
@@ -285,17 +325,14 @@ const DashboardClub = () => {
                 }
               />
             )}
-
-            <div className="modal-action">
+            <div className="modal-action sm:col-span-2">
               <button type="submit" className="btn btn-success">
                 Create
               </button>
               <button
                 type="button"
                 className="btn"
-                onClick={() =>
-                  document.getElementById("event_modal").close()
-                }
+                onClick={() => document.getElementById("event_modal").close()}
               >
                 Close
               </button>
