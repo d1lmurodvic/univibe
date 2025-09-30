@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 const BASE_URL = "https://api.univibe.uz";
 
 const DashboardClub = () => {
-  const [events, setEvents] = useState([]);
+  const [activeEvents, setActiveEvents] = useState([]);
+  const [pendingEvents, setPendingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: "",
@@ -20,45 +21,52 @@ const DashboardClub = () => {
 
   const token = localStorage.getItem("accessToken");
 
-  // === Normalize image URL ===
   const getImageUrl = (imgPath) => {
     if (!imgPath) return "https://via.placeholder.com/400x200";
     if (imgPath.startsWith("http")) return imgPath;
     return `${BASE_URL}${imgPath}`;
   };
 
-  // === Fetch events ===
+  // === Fetch Events ===
   const fetchEvents = async () => {
     try {
       const res = await axios.get(`${BASE_URL}/api/v1/clubs/events/list/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
-      console.log("Events response:", res.data);
-  
-      // API returns paginated response { count, results }
-      if (res.data?.results) {
-        setEvents(res.data.results);
-      } else if (Array.isArray(res.data)) {
-        setEvents(res.data);
-      } else {
-        setEvents([]);
-      }
+
+      console.log("RAW EVENTS RESPONSE:", JSON.stringify(res.data, null, 2));
+
+      setActiveEvents(res.data?.active || []);
+      setPendingEvents(res.data?.pending || []);
     } catch (err) {
       console.error("Fetch events error:", err.response?.data || err.message);
       toast.error("Failed to load events");
-      setEvents([]);
+      setActiveEvents([]);
+      setPendingEvents([]);
     } finally {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     if (token) fetchEvents();
   }, [token]);
 
-  // === Create event ===
+  // === Delete Event ===
+  const handleDelete = async (eventId) => {
+    try {
+      await axios.delete(`${BASE_URL}/api/v1/clubs/events/${eventId}/delete/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Event deleted successfully!");
+      await fetchEvents();
+    } catch (err) {
+      console.error("Delete event error:", err.response?.data || err.message);
+      toast.error("Failed to delete event");
+    }
+  };
+
+  // === Create Event ===
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -66,30 +74,26 @@ const DashboardClub = () => {
       fd.append("title", formData.title);
       if (formData.img) fd.append("img", formData.img);
       if (formData.url) fd.append("url", formData.url);
-  
-      // Convert datetime-local to ISO string (UTC)
+
       if (formData.event_datetime) {
         const dt = new Date(formData.event_datetime);
         fd.append("event_datetime", dt.toISOString());
       }
-  
-      // registration_deadline format: YYYY-MM-DD
+
       if (formData.registration_deadline) {
         const deadline = new Date(formData.registration_deadline)
           .toISOString()
           .split("T")[0];
         fd.append("registration_deadline", deadline);
       }
-  
-      // ✅ faqat promo belgilansa, quantity_token yuboramiz
+
       if (formData.has_promo) {
         fd.append("has_promo", "true");
         fd.append("quantity_token", String(formData.quantity_token));
       } else {
         fd.append("has_promo", "false");
-        // ❌ quantity_token yuborilmaydi
       }
-  
+
       const createRes = await axios.post(
         `${BASE_URL}/api/v1/clubs/events/create/`,
         fd,
@@ -100,9 +104,9 @@ const DashboardClub = () => {
           },
         }
       );
-  
+
       console.log("Created event:", createRes.data);
-  
+
       toast.success("Event created successfully!");
       await fetchEvents();
       document.getElementById("event_modal").close();
@@ -111,12 +115,61 @@ const DashboardClub = () => {
       toast.error("Failed to create event. Please try again.");
     }
   };
-  
-  
+
+  const EventSection = ({ title, events, borderColor }) => (
+    <div className="mt-6">
+      <h2 className="text-xl font-bold mb-4">{title}</h2>
+      {events.length === 0 ? (
+        <p className="text-base-300">No {title.toLowerCase()}.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {events.map((ev) => (
+            <div
+              key={ev.id}
+              className={`relative bg-base-100 rounded-2xl shadow-lg border-t-4 ${borderColor} hover:shadow-2xl hover:scale-[1.02] transition-all`}
+            >
+              <figure className="rounded-t-2xl overflow-hidden">
+                <img
+                  src={getImageUrl(ev.img)}
+                  alt={ev.title}
+                  className="w-full h-48 object-cover hover:scale-105 transition-transform"
+                />
+              </figure>
+              <div className="p-4 border-t flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold">{ev.title}</h3>
+                  <p className="text-sm text-base-content mt-1">
+                    {ev.event_datetime
+                      ? new Date(ev.event_datetime).toLocaleString()
+                      : "No date"}
+                  </p>
+                  {ev.url && (
+                    <a
+                      href={ev.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-2 inline-block text-primary hover:underline"
+                    >
+                      🔗 Event Link
+                    </a>
+                  )}
+                </div>
+                <button
+                  className="btn btn-error btn-sm ml-2"
+                  onClick={() => handleDelete(ev.id)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="container mx-auto max-w-[95%] overflow-x-auto flex flex-col gap-4">
-      {/* Header */}
+    <div className="container mx-auto max-w-[95%] flex flex-col gap-6 py-6">
       <div className="flex items-center justify-between">
         <p className="text-2xl font-bold text-info/80">Dashboard</p>
         <div className="flex gap-3">
@@ -132,57 +185,34 @@ const DashboardClub = () => {
         </div>
       </div>
 
-      {/* Event cards */}
       {loading ? (
-        <p>Loading events…</p>
-      ) : events.length === 0 ? (
-        <p>No events found.</p>
-      ) : (
-        <div className="flex flex-wrap gap-4">
-          {events.map((ev) => (
-            <div
-              key={ev.id}
-              className="card bg-base-100 w-[25%] shadow-sm border-2 border-success"
-            >
-              <figure>
-                <img
-                  src={getImageUrl(ev.img)}
-                  alt={ev.title}
-                  className="w-full h-48 object-cover"
-                />
-              </figure>
-              <div className="card p-2">
-                <h2 className="card-title">{ev.title}</h2>
-                <p className="text-sm text-gray-500">
-                  {ev.event_datetime
-                    ? new Date(ev.event_datetime).toLocaleString()
-                    : "No date"}
-                </p>
-                {ev.url && (
-                  <a
-                    href={ev.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="link link-primary"
-                  >
-                    Event Link
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-center h-40">
+          <span className="loading loading-infinity loading-lg"></span>
         </div>
+      ) : (
+        <>
+          <EventSection
+            title="Active Events"
+            events={activeEvents}
+            borderColor="border-success"
+          />
+          <EventSection
+            title="Pending Events"
+            events={pendingEvents}
+            borderColor="border-warning"
+          />
+        </>
       )}
 
-      {/* Modal for create */}
+      {/* === Modal === */}
       <dialog id="event_modal" className="modal modal-bottom sm:modal-middle">
         <div className="modal-box">
           <h3 className="font-bold text-lg mb-4">Create New Event</h3>
-          <form onSubmit={handleCreate} className="flex flex-col gap-3">
+          <form onSubmit={handleCreate} className="grid gap-4">
             <input
               type="text"
               placeholder="Title"
-              className="input input-bordered"
+              className="input input-bordered w-full"
               required
               value={formData.title}
               onChange={(e) =>
@@ -195,12 +225,12 @@ const DashboardClub = () => {
               onChange={(e) =>
                 setFormData({ ...formData, img: e.target.files[0] })
               }
-              className="file-input file-input-bordered"
+              className="file-input file-input-bordered w-full"
             />
             <input
               type="url"
               placeholder="Event URL"
-              className="input input-bordered"
+              className="input input-bordered w-full"
               value={formData.url}
               onChange={(e) =>
                 setFormData({ ...formData, url: e.target.value })
@@ -208,7 +238,7 @@ const DashboardClub = () => {
             />
             <input
               type="datetime-local"
-              className="input input-bordered"
+              className="input input-bordered w-full"
               required
               value={formData.event_datetime}
               onChange={(e) =>
@@ -217,7 +247,7 @@ const DashboardClub = () => {
             />
             <input
               type="date"
-              className="input input-bordered"
+              className="input input-bordered w-full"
               required
               value={formData.registration_deadline}
               onChange={(e) =>
@@ -239,14 +269,13 @@ const DashboardClub = () => {
               Has promo?
             </label>
 
-            {/* Promo input faqat checkbox true bo‘lsa ko‘rinadi */}
             {formData.has_promo && (
               <input
                 type="number"
                 min="0"
                 max="10"
                 placeholder="Promo token quantity"
-                className="input input-bordered"
+                className="input input-bordered w-full"
                 value={formData.quantity_token}
                 onChange={(e) =>
                   setFormData({
