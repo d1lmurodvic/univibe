@@ -244,6 +244,7 @@ const ClubProfile = () => {
           variants={{
             hidden: {},
             visible: { transition: { staggerChildren: 0.15 } },
+            //asdf
           }}
           className="grid grid-cols-1 md:grid-cols-2 gap-4"
         >
