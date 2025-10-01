@@ -3,29 +3,27 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ToastContainer } from "react-toastify";
 import axiosInstance from "../../axiosInstance/axiosInstance";
 import ClubCard from "../../components/ClubCard/ClubCard";
-import { BsFillLightningChargeFill } from "react-icons/bs";
 import { FaCrown } from "react-icons/fa";
+import { BsFillLightningChargeFill } from "react-icons/bs";
 
 export default function Clubs() {
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState(null);
-
+  console.log("asdf", modalData)
   useEffect(() => {
-    (async () => {
+    const fetchUser = async () => {
       try {
         const res = await axiosInstance.get("/api/v1/students/profile/");
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          setCurrentUserId(res.data[0].id);
-        } else if (res.data?.id) {
-          setCurrentUserId(res.data.id);
-        }
+        if (res.data.length > 0) setCurrentUserId(res.data[0].id);
       } catch (err) {
         console.error("User profile fetch error:", err);
       }
-    })();
+    };
+    fetchUser();
   }, []);
 
   const fetchClubs = async () => {
@@ -34,30 +32,28 @@ export default function Clubs() {
       setClubs(response.data);
     } catch (error) {
       console.error("Error fetching club data:", error);
+      setError("Failed to load club data.");
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchClubs();
   }, []);
 
-  // 🔑 Klub ma’lumotlari (followers shu yerda bo‘lishi shart)
-  const refreshModal = async (clubId) => {
-    try {
-      const clubRes = await axiosInstance.get(`/api/v1/clubs/${clubId}/`);
-      setModalData(clubRes.data);
-    } catch (err) {
-      console.error("refreshModal error:", err);
-    }
-  };
-
-  const openModal = (clubId) => {
+  const openModal = async (clubId) => {
     setShowModal(true);
     setModalData(null);
-    refreshModal(clubId);
+    try {
+      const res = await axiosInstance.get(`/api/v1/clubs/${clubId}/`);
+      setModalData(res.data);
+    } catch (err) {
+      console.error("Single club fetch error:", err);
+    }
   };
-
+  console.log("SS", modalData);
+  // Animation variants
   const cardVariants = {
     hidden: { opacity: 0, y: 40 },
     visible: (i) => ({
@@ -68,17 +64,11 @@ export default function Clubs() {
   };
 
   return (
-    <div className="p-4 bg-base-100 rounded min-h-screen w-full max-w-6xl mx-auto">
+    <div className="p-4 bg-gradient-to-br from-base-100 via-base-200 to-base-300 rounded min-h-screen w-full max-w-6xl mx-auto">
       <ToastContainer position="bottom-right" autoClose={5000} theme="dark" />
+      <h1 className="md:text-4xl text-2xl font-bold mb-8">Clubs</h1>
 
-      <motion.h1
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-4xl font-bold mb-6"
-      >
-        Clubs
-      </motion.h1>
-
+      {/* Grid with animation */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
           <p>Loading...</p>
@@ -97,18 +87,14 @@ export default function Clubs() {
                   club={club}
                   onClick={openModal}
                   currentUserId={currentUserId}
-                  onUpdate={(id) => {
-                    fetchClubs();
-                    if (showModal && modalData?.id === id) {
-                      refreshModal(id);
-                    }
-                  }}
+                  onUpdate={fetchClubs}
                 />
               </motion.div>
             ))}
           </AnimatePresence>
         )}
       </div>
+
 
       {/* Modal */}
       <AnimatePresence>
@@ -117,14 +103,14 @@ export default function Clubs() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            className="fixed inset-0 z-50 flex items-center p-4 justify-center bg-black/50"
           >
             <motion.div
               initial={{ scale: 0.8, y: 50, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.8, y: 50, opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="bg-base-100 max-w-lg w-full rounded-xl shadow-xl p-6 overflow-y-auto max-h-[90vh]"
+              className="bg-base-100 xl:max-w-xl lg:max-w-lg sm:max-w-sm md:max-w-lg max-w-sm w-full rounded-xl shadow-xl p-6 overflow-y-auto max-h-[90vh]"
             >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">{modalData.name}</h2>
@@ -138,20 +124,20 @@ export default function Clubs() {
 
               <div className="flex items-center gap-4 mb-4">
                 {modalData.logo ? (
-                  <img
-                    src={
-                      modalData.logo.startsWith("http")
-                        ? modalData.logo
-                        : `https://api.univibe.uz${modalData.logo}`
-                    }
+                  <motion.img
+                    src={modalData.logo}
                     alt="club logo"
-                    className="w-20 h-20 object-cover rounded-full border"
+                    className="w-16 h-16 object-cover rounded-full border"
+                    initial={{ rotate: -10, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    transition={{ duration: 0.5 }}
                   />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-xl font-semibold uppercase">
-                    {modalData.name?.[0] || "?"}
+                    {modalData.name[0] || "?"}
                   </div>
                 )}
+
                 <div>
                   <p>
                     <strong>Category:</strong>{" "}
@@ -163,18 +149,28 @@ export default function Clubs() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 text-sm text-base-content/70 mb-2">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="flex items-center gap-3 text-sm text-base-content/70"
+              >
                 <FaCrown className="text-warning shrink-0" />
-                <p className="font-medium">
+                <p className="font-medium truncate">
                   Leader:{" "}
                   <span className="font-bold">
                     {modalData.leader?.name || "—"}{" "}
                     {modalData.leader?.surname || ""}
                   </span>
                 </p>
-              </div>
+              </motion.div>
 
-              <div className="text-sm flex items-center gap-2 text-base-content/70 mb-4">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="text-sm flex items-center gap-2 text-base-content/70"
+              >
                 <BsFillLightningChargeFill className="text-yellow-500" />
                 <p className="font-medium">
                   Points:{" "}
@@ -182,45 +178,54 @@ export default function Clubs() {
                     {modalData.tokens ?? 0}
                   </span>
                 </p>
-              </div>
+              </motion.div>
 
-              {/* ✅ Followers list – backenddan followers maydoni bo‘lsa ishlaydi */}
+              {/* Followers section */}
               <div className="mt-4">
-                <h3 className="text-xl font-semibold">
-                  Followers ({modalData.followers?.length || 0})
+                <h3 className="text-lg font-semibold">
+                  Followers ({modalData.followers?.count || 0})
                 </h3>
-                {modalData.followers?.length ? (
-                  <ul className="space-y-2 mt-2">
-                    {modalData.followers.map((f) => (
-                      <li
-                        key={f.id}
+
+
+                {modalData.followers?.results?.length > 0 ? (
+                  <motion.ul
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: {},
+                      visible: { transition: { staggerChildren: 0.1 } },
+                    }}
+                    className="space-y-2 pt-2"
+                  >
+                    {modalData.followers.results.map((follower) => (
+                      <motion.li
+                        key={follower.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
                         className="flex items-center gap-3 border-b pb-2"
                       >
-                        {f.image ? (
+                        {follower.image ? (
                           <img
-                            src={
-                              f.image.startsWith("http")
-                                ? f.image
-                                : `https://api.univibe.uz${f.image}`
-                            }
-                            alt={f.name}
+                            src={`https://api.univibe.uz${follower.image}`}
+                            alt={follower.name}
                             className="w-10 h-10 rounded-full object-cover border"
                           />
                         ) : (
                           <div className="w-10 h-10 rounded-full bg-secondary text-white flex items-center justify-center">
-                            {f.name?.[0] || "?"}
+                            {follower.name[0]}
                           </div>
                         )}
-                        <span className="font-medium">  
-                          {f.name} {f.surname}
+                        <span className="font-medium">
+                          {follower.name} {follower.surname}
                         </span>
-                      </li>
+                      </motion.li>
                     ))}
-                  </ul>
+                  </motion.ul>
                 ) : (
-                  <p className="mt-2 text-base-content/60">No followers yet.</p>
+                  <p>No followers yet.</p>
                 )}
               </div>
+
             </motion.div>
           </motion.div>
         )}

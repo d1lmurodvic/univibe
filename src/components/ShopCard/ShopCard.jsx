@@ -6,7 +6,7 @@ import axiosInstance from "../../axiosInstance/axiosInstance";
 import { toast } from "react-toastify";
 import { fetchUserInfo } from "../../redux/slices/authThunk";
 import "react-toastify/dist/ReactToastify.css";
-
+import coin from "../../assets/coin.png";
 const ShopCard = ({ product }) => {
   const dispatch = useDispatch();
   const stock = product.quantity;
@@ -96,8 +96,8 @@ const ShopCard = ({ product }) => {
       <div className={`badge ${badgeClass} absolute top-5 left-5 mb-2`} role="status">
         <span className="font-semibold">{badgeText}</span>
       </div>
-      <p className="text-lg font-bold text-primary flex items-center">
-        <BsFillLightningChargeFill className="text-xl text-amber-500" /> {product.cost}
+      <p className="text-lg font-bold text-primary flex gap-1 items-center">
+        <img src={coin} alt="Coin" className="w-5" /> {product.cost}
       </p>
       <button
         className={`btn btn-sm w-full mt-5 ${isOutOfStock ? "btn-disabled" : "btn-success"}`}

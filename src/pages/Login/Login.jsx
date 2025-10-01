@@ -82,6 +82,9 @@ const Login = () => {
       } else {
         navigate('/');
       }
+      if (role === 'club') {
+        navigate('/dashboard');
+      }
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
       dispatch(loginFailure(error.response?.data || error.message));
@@ -178,15 +181,7 @@ const Login = () => {
               checked={role === 'club'}
               onChange={() => setRole('club')}
             />
-            <input
-              type="radio"
-              name="role_tabs"
-              className={`tab rounded-2xl flex-1 font-semibold text-sm sm:text-base transition-all duration-300 ${role === 'admin' ? 'tab-active bg-secondary/70 text-white shadow-md border-2 border-secondary' : 'bg-base-200 text-base-content/70 hover:bg-base-300'
-                }`}
-              aria-label="Admin"
-              checked={role === 'admin'}
-              onChange={() => setRole('admin')}
-            />
+            
           </motion.div>
 
           <div className="space-y-6">

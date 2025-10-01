@@ -112,7 +112,7 @@ const Profile = () => {
   const avatarSrc =
     previewImage ||
     (profile?.image
-      ? `https://api.univibe.uz${profile.image}?v=${profile.image_updated_at}`
+      ? `https://api.akhu.univibe.uz${profile.image}?v=${profile.image_updated_at}`
       : "");
 
   return (

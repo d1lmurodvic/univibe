@@ -82,7 +82,7 @@ const Navbar = ({ tokens }) => {
               >
                 {/* ✅ student bo‘lsa image, club bo‘lsa logo */}
                 <img
-                  src={`https://api.univibe.uz${user?.image || user?.logo}?v=${
+                  src={`https://api.akhu.univibe.uz${user?.image || user?.logo}?v=${
                     user?.image_updated_at || Date.now()
                   }`}
                   alt={user?.name || user?.club_name || "User"}

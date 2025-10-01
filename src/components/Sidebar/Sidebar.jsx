@@ -14,11 +14,14 @@ const gradeColors = {
   Default: "bg-neutral",
 };
 
+// Env dan API URL’larni olish
+const API_URL = import.meta.env.VITE_API_URL;
+const CLUB_API_URL = import.meta.env.VITE_CLUB_API_URL;
+
 const Sidebar = () => {
   const role = useSelector((state) => state?.auth?.role);
   const userInfo = useSelector((state) => state?.auth?.userInfo);
 
-  // student uchun array, club uchun obyekt
   const user =
     role === "student"
       ? userInfo && userInfo.length > 0
@@ -53,7 +56,6 @@ const Sidebar = () => {
     document.getElementById("logout_modal").close();
   };
 
-  // Role bo‘yicha linklar
   const links =
     role === "student"
       ? [
@@ -105,7 +107,7 @@ const Sidebar = () => {
             }
             className="flex flex-col items-center mb-4 cursor-pointer"
           >
-            {/* Student bo‘lsa */}
+            {/* Student */}
             {role === "student" && (
               <>
                 {user?.image && !imgError ? (
@@ -114,7 +116,7 @@ const Sidebar = () => {
                       className={`w-24 rounded-full ring ${gradeColor} ring-offset-2 ring-offset-base-100 transition-all`}
                     >
                       <img
-                        src={`https://api.univibe.uz${user.image}?v=${
+                        src={`${API_URL}${user.image}?v=${
                           user.image_updated_at || Date.now()
                         }`}
                         alt={`${user?.name || "User"} ${user?.surname || ""}`}
@@ -138,16 +140,14 @@ const Sidebar = () => {
               </>
             )}
 
-            {/* Club bo‘lsa */}
+            {/* Club */}
             {role === "club" && (
               <>
                 {user?.logo && !imgError ? (
                   <div className="avatar">
                     <div className="w-24 rounded-full ring ring-primary ring-offset-2 ring-offset-base-100 transition-all">
                       <img
-                        src={`https://api.univibe.uz${user.logo}?v=${
-                          user.logo_updated_at || Date.now()
-                        }`}
+                        src={`${CLUB_API_URL}${user.logo}?v=$`}
                         alt={user?.name || "Club"}
                         onError={() => setImgError(true)}
                       />
