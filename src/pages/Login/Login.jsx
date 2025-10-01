@@ -26,8 +26,6 @@ const Login = () => {
           login: `${baseUrl}/api/v1/clubs/auth/login/`,
           info: `${baseUrl}/api/v1/clubs/profile/` 
         };
-
-
       case 'admin':
         return { login: `${baseUrl}/api/v1/staff/auth/login/`, info: null };
       case 'student':
@@ -54,6 +52,7 @@ const Login = () => {
       console.log("login response:", loginResponse.data);
       const refreshToken = loginResponse.data.refresh_token;
       const accessToken = loginResponse.data.access_token;
+      console.log('Login response:', loginResponse.data);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('role', role);
@@ -83,8 +82,7 @@ const Login = () => {
       } else {
         navigate('/');
       }
-
-      if ( role === 'club') {
+      if (role === 'club') {
         navigate('/dashboard');
       }
     } catch (error) {
@@ -118,6 +116,7 @@ const Login = () => {
     hidden: { opacity: 0, y: 0 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.2 } },
   };
+
 
   return (
     <motion.div
@@ -194,6 +193,7 @@ const Login = () => {
             />
           </motion.div>
 
+
           <div className="space-y-6">
             <motion.div variants={itemVariants} className="relative">
               <label htmlFor={role === 'student' ? 'email' : 'login'} className="block mb-2 text-sm font-medium text-base-content">
@@ -265,6 +265,7 @@ const Login = () => {
                 </motion.p>
               )}
             </motion.div>
+
 
             <motion.button
               type="button"

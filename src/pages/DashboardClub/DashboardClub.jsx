@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { IoMdTime } from "react-icons/io";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -71,14 +72,13 @@ const DashboardClub = () => {
 
       if (formData.event_datetime) {
         const dt = new Date(formData.event_datetime);
-        const localDateTime = dt.toISOString().slice(0, 16)
-        fd.append("event_datetime", localDateTime);
+        fd.append("event_datetime", dt.toISOString());
       }
 
       if (formData.registration_deadline) {
         const deadline = new Date(formData.registration_deadline)
           .toISOString()
-          .split("T")[0]; // YYYY-MM-DD
+          .split("T")[0];
         fd.append("registration_deadline", deadline);
       }
 
@@ -119,15 +119,15 @@ const DashboardClub = () => {
   const handleQrCode = async (eventId) => {
     try {
       const res = await axios.get(
-        `${BASE_URL}/api/v1/events/${eventId}/promo-qr/`,
+        `${BASE_URL}/api/v1/events/events/${eventId}/promo-qr/`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (res.data?.qr_code) {
         setQrModal({ open: true, qrUrl: `${BASE_URL}${res.data.qr_code}` });
-  
+
         setTimeout(() => {
           document.getElementById("qr_modal").showModal();
         }, 50);
@@ -142,7 +142,6 @@ const DashboardClub = () => {
       }
     }
   };
-  
 
   const EventSection = ({ title, events, borderColor }) => (
     <div className="mt-6">
@@ -151,76 +150,102 @@ const DashboardClub = () => {
         <p className="text-warning">No {title.toLowerCase()}.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((ev) => (
-            <div
-              key={ev.id}
-              className={`relative bg-base-100 rounded-2xl shadow-lg border-t-4 ${borderColor} hover:shadow-2xl hover:scale-[1.02] transition-all`}
-            >
-              <figure className="rounded-t-2xl overflow-hidden">
-                <img
-                  src={getImageUrl(ev.img)}
-                  alt={ev.title}
-                  className="w-full h-48 object-cover hover:scale-105 transition-transform"
-                />
-              </figure>
-              <div className="p-4 border-t flex items-center border-b-2 border-info rounded-b-2xl justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold">{ev.title}</h3>
-                  <p className="text-sm text-base-content mt-1">
-                    {ev.event_datetime
-                      ? new Date(ev.event_datetime).toLocaleString()
-                      : "No date"}
-                  </p>
-                  {ev.url && (
-                    <a
-                      href={ev.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 inline-block text-primary hover:underline"
-                    >
-                      🔗 Event Link
-                    </a>
-                  )}
-                </div>
+          <AnimatePresence>
+            {events.map((ev) => (
+              <motion.div
+                key={ev.id}
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                transition={{ duration: 0.4 }}
+                className={`relative bg-base-100 rounded-2xl shadow-lg border-t-4 ${borderColor} hover:shadow-2xl hover:scale-[1.02] transition-all`}
+              >
+                <figure className="rounded-t-2xl overflow-hidden">
+                  <motion.img
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3 }}
+                    src={getImageUrl(ev.img)}
+                    alt={ev.title}
+                    className="w-full h-48 object-cover"
+                  />
+                </figure>
+                <div className="p-4 border-t flex items-center border-b-2 border-info rounded-b-2xl justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">{ev.title}</h3>
+                    <p className="text-sm text-base-content mt-1">
+                      {ev.event_datetime
+                        ? new Date(ev.event_datetime).toLocaleString()
+                        : "No date"}
+                    </p>
+                    {ev.url && (
+                      <a
+                        href={ev.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-primary hover:underline"
+                      >
+                        🔗 Event Link
+                      </a>
+                    )}
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <button
-                    className="btn btn-success btn-sm"
-                    onClick={() => handleQrCode(ev.id)}
-                  >
-                    QrCode
-                  </button>
-                  <button
-                    className="btn btn-error btn-sm"
-                    onClick={() => handleDelete(ev.id)}
-                  >
-                    Delete
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      className="btn btn-success btn-sm"
+                      onClick={() => handleQrCode(ev.id)}
+                    >
+                      QrCode
+                    </motion.button>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      className="btn btn-error btn-sm"
+                      onClick={() => handleDelete(ev.id)}
+                    >
+                      Delete
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="container mx-auto max-w-[95%] flex flex-col gap-6 py-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.6 }}
+      className="container mx-auto max-w-[95%] flex flex-col gap-6 py-6"
+    >
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <p className="text-2xl font-bold text-info/80 flex sm:justify-center">
+        <motion.p
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-2xl font-bold text-info/80 flex sm:justify-center"
+        >
           Dashboard
-        </p>
+        </motion.p>
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-          <button className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn btn-primary btn-sm sm:btn-md w-full sm:w-auto"
+          >
             <IoMdTime /> Event history
-          </button>
-          <button
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             className="btn btn-success btn-sm sm:btn-md w-full sm:w-auto"
             onClick={() => document.getElementById("event_modal").showModal()}
           >
             + Add events
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -243,36 +268,54 @@ const DashboardClub = () => {
         </>
       )}
 
-      {/* ✅ QR Modal */}
+      {/* ✅ QR Modal with animation */}
       <dialog id="qr_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box">
-          <h3 className="font-bold text-lg mb-4">Event QR Code</h3>
-          {qrModal.qrUrl ? (
-            <img
-              src={qrModal.qrUrl}
-              alt="QR Code"
-              className="mx-auto w-56 h-56 object-contain"
-            />
-          ) : (
-            <p>No QR code found</p>
-          )}
-          <div className="modal-action">
-            <button
-              className="btn"
-              onClick={() => {
-                setQrModal({ open: false, qrUrl: null });
-                document.getElementById("qr_modal").close();
-              }}
+        <AnimatePresence>
+          {qrModal.open && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.3 }}
+              className="modal-box"
             >
-              Close
-            </button>
-          </div>
-        </div>
+              <h3 className="font-bold text-lg mb-4">Event QR Code</h3>
+              {qrModal.qrUrl ? (
+                <motion.img
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4 }}
+                  src={qrModal.qrUrl}
+                  alt="QR Code"
+                  className="mx-auto w-56 h-56 object-contain"
+                />
+              ) : (
+                <p>No QR code found</p>
+              )}
+              <div className="modal-action">
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setQrModal({ open: false, qrUrl: null });
+                    document.getElementById("qr_modal").close();
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </dialog>
 
       {/* Add Event Modal */}
       <dialog id="event_modal" className="modal modal-bottom sm:modal-middle">
-        <div className="modal-box w-full max-w-2xl">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="modal-box w-full max-w-2xl"
+        >
           <h3 className="font-bold text-lg mb-4">Create New Event</h3>
           <form
             onSubmit={handleCreate}
@@ -354,9 +397,14 @@ const DashboardClub = () => {
               />
             )}
             <div className="modal-action sm:col-span-2">
-              <button type="submit" className="btn btn-success">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                type="submit"
+                className="btn btn-success"
+              >
                 Create
-              </button>
+              </motion.button>
               <button
                 type="button"
                 className="btn"
@@ -368,9 +416,9 @@ const DashboardClub = () => {
               </button>
             </div>
           </form>
-        </div>
+        </motion.div>
       </dialog>
-    </div>
+    </motion.div>
   );
 };
 

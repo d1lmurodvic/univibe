@@ -2,8 +2,8 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { BsFillLightningChargeFill } from "react-icons/bs";
 import { logout } from "../../redux/slices/authSlice";
+import coin from "../../assets/coin.png";
 
 const gradeColors = {
   Freshmen: "bg-blue-500",
@@ -13,11 +13,22 @@ const gradeColors = {
   Default: "bg-neutral",
 };
 
+// ✅ Helper to normalize user image/club logo URL
+const getUserImage = (user) => {
+  const path = user?.image || user?.logo;
+  if (!path) return null;
+
+  // If backend already provides a full URL
+  if (path.startsWith("http")) return path;
+
+  // Otherwise prepend API domain
+  return `https://api.univibe.uz${path}?v=${user?.image_updated_at || Date.now()}`;
+};
+
 const Navbar = ({ tokens }) => {
   const role = useSelector((state) => state?.auth?.role);
   const userInfo = useSelector((state) => state?.auth?.userInfo);
 
-  // ✅ student bo‘lsa arraydan 1-chi element, club bo‘lsa obyekt
   const user =
     role === "student"
       ? userInfo && userInfo.length > 0
@@ -58,23 +69,24 @@ const Navbar = ({ tokens }) => {
 
   return (
     <div className="bg-base-200 hidden md:flex navbar shadow-sm">
-      {/* Left: Search */}
+      {/* Navbar Start */}
       <div className="navbar-start">
         <input className="input input-md" placeholder="Search" type="text" />
       </div>
 
       <div className="navbar-center"></div>
 
-      {/* Right: Tokens & Avatar */}
+      {/* Navbar End */}
       <div className="navbar-end">
-        <div className="flex items-center mr-4 border border-primary py-2 px-5 rounded">
-          <BsFillLightningChargeFill className="text-2xl text-amber-500 mr-2" />
-          {/* ✅ student va club tokenlari ham ishlaydi */}
+        {/* Tokens */}
+        <div className="flex items-center mr-4 border border-primary py-2 px-5 gap-2 rounded">
+          <img src={coin} alt="coin" className="w-6" />
           <span className="text-primary">{tokens || user?.tokens || 0}</span>
         </div>
 
+        {/* Profile Dropdown */}
         <div className="dropdown dropdown-end">
-          {user?.image || user?.logo ? (
+          {getUserImage(user) && !imgError ? (
             <div
               tabIndex={0}
               role="button"
@@ -84,9 +96,7 @@ const Navbar = ({ tokens }) => {
                 className={`w-10 rounded-full ring ${gradeColor} ring-offset-2 ring-offset-base-100 transition-all`}
               >
                 <img
-                  src={`https://api.univibe.uz${user?.image || user?.logo}?v=${
-                    user?.image_updated_at || Date.now()
-                  }`}
+                  src={getUserImage(user)}
                   alt={user?.name || user?.club_name || "User"}
                   onError={() => setImgError(true)}
                 />
@@ -115,13 +125,18 @@ const Navbar = ({ tokens }) => {
               <Link to="#">Settings</Link>
             </li>
             <li>
-              <button onClick={handleLogoutClick}>Logout</button>
+              <button
+                onClick={handleLogoutClick}
+                className="text-error font-bold"
+              >
+                Logout
+              </button>
             </li>
           </ul>
         </div>
       </div>
 
-      {/* Logout modal */}
+      {/* Logout Confirmation Modal */}
       <dialog
         id="logout_modal"
         className="modal"
@@ -150,3 +165,4 @@ const Navbar = ({ tokens }) => {
 };
 
 export default Navbar;
+  
