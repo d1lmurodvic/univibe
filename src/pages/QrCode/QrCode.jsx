@@ -3,13 +3,17 @@ import QrScanner from "../../components/QrScanner/QrScanner";
 
 export default function QrCode() {
   const handleScanSuccess = (text) => {
-    alert("QR код: " + text);
+    console.log("QR o‘qildi:", text);
+  };
+
+  const validateQr = (text) => {
+    // Masalan: faqat URL bo‘lsa ruxsat beramiz
+    return text.startsWith("http");
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-      <h1 className="text-2xl font-bold mb-4">Сканер QR-кодов</h1>
-      <QrScanner onScanSuccess={handleScanSuccess} />
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4">
+      <QrScanner onScanSuccess={handleScanSuccess} validateQr={validateQr} />
     </div>
   );
 }

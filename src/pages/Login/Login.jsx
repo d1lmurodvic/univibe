@@ -181,7 +181,6 @@ const Login = () => {
               checked={role === 'club'}
               onChange={() => setRole('club')}
             />
-            
           </motion.div>
 
           <div className="space-y-6">
