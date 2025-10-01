@@ -15,9 +15,11 @@ const ClubProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
 
+  const url = import.meta.env.VITE_API_URL
+
   const fetchClubProfile = async () => {
     try {
-      const response = await axiosInstance.get('https://api.univibe.uz/api/v1/clubs/profile/');
+      const response = await axiosInstance.get(`${url}/api/v1/clubs/profile/`);
       if (response.data) {
         setClubProfile(response.data);
       } else {

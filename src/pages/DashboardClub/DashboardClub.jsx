@@ -71,7 +71,7 @@ const DashboardClub = () => {
 
       if (formData.event_datetime) {
         const dt = new Date(formData.event_datetime);
-        const localDateTime = dt.toISOString().slice(0, 16); // YYYY-MM-DDTHH:mm
+        const localDateTime = dt.toISOString().slice(0, 16)
         fd.append("event_datetime", localDateTime);
       }
 
